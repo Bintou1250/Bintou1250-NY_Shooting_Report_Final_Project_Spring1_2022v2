@@ -1,0 +1,192 @@
+
+**Week3 NY SHOOTING REPORT**
+
+Data imported from "https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv"  
+<br>
+<br>
+**Introduction**   
+We have here a table of 23,585 shooting incidents in New York occurring from 2006 to 2020.
+Data are from government publications.     
+Even if both information are available, for this report I will focus on the victim rather than the perpetrator.  
+This is a slightly biased report in that I choose to consider the victim side, but this will have no impact on the outcome of the analysis.
+<br>
+<br>
+```{r}
+library(tidyverse)
+data_collected = read_csv("https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv")
+head(data_collected)
+```
+
+```{r}
+summary(data_collected)
+```
+**Comments**  
+The data are pretty clean, there are no inconvenient "NAs" or missing useful values for our analyses.
+
+
+
+
+Let's select variables for our analyses. We will focus on the victims rather than the perpetrators, the "bias" here is to highlight the likelihood to be a potential victim of shootings in New York.
+
+
+```{r}
+data_collected=data_collected %>% select(INCIDENT_KEY, OCCUR_DATE, OCCUR_TIME,BORO,VIC_AGE_GROUP, VIC_SEX, VIC_RACE)
+data_collected
+```
+**A) Analysis of general trends **  
+<br>
+1)Number of victims per borough  
+```{r}
+
+ggplot(data_collected,aes(x=BORO))+geom_bar(position="stack", fill="green")
+
+```
+
+Let's import some population data from another government website to further compare these numbers with the population levels.  
+
+*Source = https://www1.nyc.gov/assets/planning/download/pdf/planning-level/nyc-population/projections_briefing_booklet.pdf*  
+
+There are no significant increase in the populations from 2005 to 2020, so we can use 2020 population for each borough as a reference.  
+
+$BRONX = 1,420,277$  
+$BROOKLYN = 2,628,211$  
+$MANHATTAN = 1,729,530$  
+$QUEENS = 2,396,949$  
+$STATEN\,ISLAND = 517,597$  
+$TOTAL\;NEW\:YORK = 8,692,564$  
+
+```{r}
+sum(data_collected$BORO=="BRONX")/23585
+sum(data_collected$BORO=="BROOKLYN")/23585
+sum(data_collected$BORO=="MANHATTAN")/23585
+sum(data_collected$BORO=="QUEENS")/23585
+sum(data_collected$BORO=="STATEN ISLAND")/23585
+```
+
+Comparing with population ratios  
+
+
+```{r}
+1420277/8692564
+2628211/8692564
+1729530/8692564
+2396949/8692564
+517597/8692564
+```
+**Comments**  
+
+So the relative crime rates for Brooklyn and also Bronx are clearly higher with respect to the population levels, 41% vs 30% and 28% vs 16%. 
+<br>
+<br>
+2)Number of victims per age category  
+
+```{r}
+ggplot(data_collected,aes(x=VIC_AGE_GROUP))+geom_bar(position="stack", fill="yellow")
+```
+
+**Comments**  
+
+No surprise there, violent crime victims mostly belong to the young and relative young population in every city.  
+
+Let's isolate time, month and year variables.  
+
+```{r}
+glimpse(data_collected)
+data_collected=data_collected %>% separate(OCCUR_TIME,c("Crime_hour","Crime_min")) %>% separate(OCCUR_DATE,c("Crime_month","Crime_day","Crime_year"))
+data_collected
+
+```
+<br>
+3)Number of victims per hour    
+```{r}
+ggplot(data_collected,aes(x=Crime_hour))+geom_bar(position="stack", fill="orange")
+```
+
+**Comments**  
+The slopes are definitely clear, the shootings increase the later it gets up to 23:00, the "crime ideal time", then start to decrease as sunrise gets closer.
+<br>
+<br>
+4)Number of victims per month  
+
+```{r}
+ggplot(data_collected,aes(x=Crime_month))+geom_bar(position="stack", fill="purple")
+```
+
+**Comments**    
+
+Same as for the day analysis, there is also a clear trend throughout the year.    
+It's surprising to see an increase as the weather gets nicer as if crime rate was boosted by the sunny days!!  
+This is a "funny" paradox given that the shooting peak is at night time when there is no sun anymore.
+<br>
+<br>
+5)Number of victims per year  
+
+```{r}
+ggplot(data_collected,aes(x=Crime_year))+geom_bar(position="stack", fill="pink")
+
+```
+
+**Comments**  
+It might be interesting to understand the rationale behind the shocking rise in shootings in 2020, the first covid year.   We would expect the steady trend from 2017 to 2019 to keep going or even decrease, but we are facing twice as much shootings as during each of all three previous years. 
+Has covid crisis definitely ruined so many years of improvement in violent crime numbers in New York?  
+<br>
+6)Number of victims per gender  
+```{r}
+ggplot(data_collected,aes(x=VIC_SEX))+geom_bar(position="stack", fill="red")
+
+```
+
+**Comments**  
+No surprise there, violent crime rate has always been higher within male population.
+<br>
+<br>
+7)Number of victims per race  
+```{r}
+ggplot(data_collected,aes(x=VIC_RACE))+geom_bar(position="stack", fill="turquoise")
+
+```
+
+**Comments**  
+The highest potential victim is a black man, aged between 25 and 44, living in or visiting Brooklyn, at night time specifically around 23:00 in July. 
+Can we then safely conclude that any man meeting those race and age criterion should avoid at all costs Brooklyn in summer at night time? 
+Additional variables such as the circumstances of the shootings might be necessary to further conclusions. 
+<br>
+<br>
+<br>
+**B ) Further analysis for Brooklyn**  
+
+Since Brooklyn won the award of the absolute shooting cases numbers and also was outstanding in the relative shooting cases numbers with regards to population levels, let's do a deeper analysis for this borough.
+```{r}
+data_Brooklyn = data_collected %>% filter(data_collected$BORO=="BROOKLYN")
+head(data_Brooklyn)
+
+```
+
+
+1)Brooklyn shooting cases trend from 2006 to 2020  
+2)Brooklyn shooting cases day trend  
+3)Brooklyn shooting cases month trend  
+
+
+```{r}
+ggplot(data_Brooklyn,aes(x=Crime_year))+geom_bar(position="stack", fill="blue")
+ggplot(data_Brooklyn,aes(x=Crime_hour))+geom_bar(position="stack", fill="purple")
+ggplot(data_Brooklyn,aes(x=Crime_month))+geom_bar(position="stack", fill="pink")
+
+```
+<br>
+<br>
+<br>
+<br>
+**Conclusion**    
+
+I chose to focus on the likelihood to be victim of a shooting in New York because I was interested in knowing whether it was a safe place to visit.
+But the variables here are not sufficient for a thorough analysis. It would be interesting to know the circumstances of the shootings, meaning whether they occurred within drug trafficking or in the middle of the city etc.  
+We see that the trends for Brooklyn with respect to day, month and year are the same as those for total population. 
+We do not need to run the plots for gender and race, as they will certainly have the same trends as for total New York population.
+It might be interesting to see if these trends are the same on the country level. 
+
+
+
+
+
